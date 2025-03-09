@@ -1,4 +1,4 @@
-"use client";
+"use client";  // ✅ Add this line
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
