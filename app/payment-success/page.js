@@ -1,12 +1,12 @@
-"use client"; // ✅ Required for hooks
+"use client"; // ✅ Required for client-side hooks
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation"; // ✅ Correct way to get query params in Next.js 13+
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function PaymentSuccess() {
+function PaymentSuccessContent() {
     const searchParams = useSearchParams();
-    const session_id = searchParams.get("session_id"); // ✅ Get session_id from URL
+    const session_id = searchParams.get("session_id");
     const [orderDetails, setOrderDetails] = useState(null);
 
     useEffect(() => {
@@ -27,7 +27,7 @@ export default function PaymentSuccess() {
     }, [session_id]);
 
     if (!orderDetails) {
-        return <div className="min-h-screen flex items-center justify-center text-xl">Loading...</div>;
+        return <div className="text-xl text-center">Loading...</div>;
     }
 
     return (
@@ -47,5 +47,14 @@ export default function PaymentSuccess() {
                 </div>
             </div>
         </div>
+    );
+}
+
+// ✅ Wrap in <Suspense> to fix Next.js build issue
+export default function PaymentSuccess() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xl">Loading...</div>}>
+            <PaymentSuccessContent />
+        </Suspense>
     );
 }
