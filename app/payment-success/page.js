@@ -1,7 +1,7 @@
 "use client";  // ✅ Add this line
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 export default function PaymentSuccess() {
     const [orderDetails, setOrderDetails] = useState(null);
