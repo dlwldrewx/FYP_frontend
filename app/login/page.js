@@ -9,6 +9,9 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
+    // Railway Backend API Base URL
+    const API_BASE_URL = "https://fyp-production-61ab.up.railway.app"; 
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -19,7 +22,7 @@ export default function LoginPage() {
         setError("");
 
         try {
-            const response = await fetch("/api/auth/login", {
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, { // 🔥 Full URL
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
@@ -31,7 +34,10 @@ export default function LoginPage() {
                 throw new Error(data.error || "Login failed");
             }
 
+            // 🔥 Store Token & Notify Other Components
             localStorage.setItem("token", data.token);
+            window.dispatchEvent(new Event("storage")); // Notify Header Component
+
             router.push("/"); // Redirect to home page
         } catch (err) {
             setError(err.message);

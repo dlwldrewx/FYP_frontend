@@ -9,8 +9,19 @@ export default function Header() {
     const router = useRouter();
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        setIsLoggedIn(!!token); // Convert token to boolean
+        const checkAuth = () => {
+            const token = localStorage.getItem("token");
+            setIsLoggedIn(!!token); // Convert token to boolean
+        };
+
+        checkAuth(); // Check initially
+
+        // 🔥 Listen for token changes (for login/logout updates)
+        window.addEventListener("storage", checkAuth);
+
+        return () => {
+            window.removeEventListener("storage", checkAuth);
+        };
     }, []);
 
     const handleLogout = () => {

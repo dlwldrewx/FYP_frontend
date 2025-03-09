@@ -6,10 +6,31 @@ export default function CheckoutPage() {
     const [cart, setCart] = useState([]);
     const [userInfo, setUserInfo] = useState({ name: "", email: "", address: "" });
     const [isLoading, setIsLoading] = useState(false);
+    const backendURL = "https://fyp-production-61ab.up.railway.app"; // 🔥 Replace with your actual backend URL
 
     useEffect(() => {
-        const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
-        setCart(storedCart);
+        const fetchCart = async () => {
+            try {
+                const token = localStorage.getItem("token"); // Get token for authentication
+                const response = await fetch(`${backendURL}/api/cart`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    credentials: "include", // Ensures cookies/session info is sent
+                });
+
+                if (!response.ok) throw new Error("Failed to fetch cart");
+                
+                const data = await response.json();
+                setCart(data.cart);
+            } catch (error) {
+                console.error("Error fetching cart:", error);
+            }
+        };
+
+        fetchCart();
     }, []);
 
     const handleChange = (e) => {
@@ -20,24 +41,25 @@ export default function CheckoutPage() {
     const handleCheckout = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-    
+
         try {
-            const token = localStorage.getItem("token"); // 🔥 Retrieve token from localStorage
-    
-            const response = await fetch("/api/payment/create-checkout-session", {
+            const token = localStorage.getItem("token"); // 🔥 Retrieve token
+
+            const response = await fetch(`${backendURL}/api/payment/create-checkout-session`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}` // 🔥 Include token in request
                 },
                 body: JSON.stringify({ userInfo, cart }),
+                credentials: "include",
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || "Failed to create Stripe session");
             }
-    
+
             const data = await response.json();
             if (data.url) {
                 window.location.href = data.url; // Redirect to Stripe Checkout
@@ -47,7 +69,7 @@ export default function CheckoutPage() {
         } catch (error) {
             console.error("Error:", error.message);
         }
-    
+
         setIsLoading(false);
     };
 

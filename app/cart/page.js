@@ -5,16 +5,42 @@ import Link from "next/link";
 
 export default function CartPage() {
   const [cart, setCart] = useState([]);
+  const backendURL = "https://fyp-production-61ab.up.railway.app"; // Replace with your actual backend URL
 
   useEffect(() => {
-    const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
-    setCart(storedCart);
+    // Fetch cart data from the backend
+    const fetchCart = async () => {
+      try {
+        const response = await fetch(`${backendURL}/api/cart`, {
+          credentials: "include", // Ensure cookies are sent if using authentication
+        });
+        const data = await response.json();
+        setCart(data.cart);
+      } catch (error) {
+        console.error("Error fetching cart:", error);
+      }
+    };
+
+    fetchCart();
   }, []);
 
-  const handleRemoveItem = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
-    setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  const handleRemoveItem = async (id) => {
+    try {
+      const response = await fetch(`${backendURL}/api/cart/remove`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ productId: id }),
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Failed to remove item");
+
+      setCart(cart.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error("Error removing item:", error);
+    }
   };
 
   const totalPrice = cart.reduce(

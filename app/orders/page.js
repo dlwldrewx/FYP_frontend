@@ -1,18 +1,45 @@
-'use client';
-import { useEffect, useState } from 'react';
+"use client";
+import { useEffect, useState } from "react";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const API_BASE_URL = "https://fyp-production-61ab.up.railway.app"; // ✅ Replace with Railway backend URL
 
   useEffect(() => {
     const fetchOrders = async () => {
+      setLoading(true);
+      setError("");
+
       try {
-        const res = await fetch('http://localhost:5000/api/orders/user/USER_ID_HERE'); // Replace USER_ID_HERE
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("User not logged in.");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/api/orders/user`, { // ✅ Fetch orders for logged-in user
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include JWT token
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch orders");
+        }
+
         const data = await res.json();
         setOrders(data);
       } catch (err) {
-        console.error('Error fetching orders:', err);
+        setError(err.message);
       }
+
+      setLoading(false);
     };
 
     fetchOrders();
@@ -21,7 +48,12 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen p-6 bg-gray-100">
       <h1 className="text-3xl font-semibold mb-6">My Orders</h1>
-      {orders.length === 0 ? (
+
+      {loading ? (
+        <p>Loading orders...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : orders.length === 0 ? (
         <p>No orders found.</p>
       ) : (
         <div className="grid gap-6">
