@@ -4,7 +4,7 @@ const nextConfig = {
         return [
           {
             source: '/api/:path*', // Matches API requests in the Next.js app
-            destination: 'http://localhost:5000/api/:path*', // Redirects to the backend server
+            destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`, // Redirects to the backend server
           },
         ];
       },
