@@ -37,7 +37,7 @@ export default function CartPage() {
         }
 
         const data = await response.json();
-        setCart(data.cart || []); // ✅ Always set cart to an array
+        setCart(data.items || []); // ✅ Ensure it correctly extracts items
       } catch (error) {
         console.error("Error fetching cart:", error);
         setError(error.message);
