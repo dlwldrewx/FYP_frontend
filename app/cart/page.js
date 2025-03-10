@@ -4,20 +4,45 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function CartPage() {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState([]); // ✅ Always an array
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const backendURL = "https://fyp-production-61ab.up.railway.app"; // Replace with your actual backend URL
 
   useEffect(() => {
-    // Fetch cart data from the backend
     const fetchCart = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
+        const token = localStorage.getItem("token"); // ✅ Retrieve token
+        if (!token) {
+          console.error("No token found, redirecting to login...");
+          setError("Please log in to view your cart.");
+          setLoading(false);
+          return;
+        }
+
         const response = await fetch(`${backendURL}/api/cart`, {
-          credentials: "include", // Ensure cookies are sent if using authentication
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Send token
+          },
         });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch cart. Please check your login status.");
+        }
+
         const data = await response.json();
-        setCart(data.cart);
+        setCart(data.cart || []); // ✅ Always set cart to an array
       } catch (error) {
         console.error("Error fetching cart:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -26,10 +51,17 @@ export default function CartPage() {
 
   const handleRemoveItem = async (id) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found, cannot remove item.");
+        return;
+      }
+
       const response = await fetch(`${backendURL}/api/cart/remove`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ Send token
         },
         body: JSON.stringify({ productId: id }),
         credentials: "include",
@@ -37,13 +69,13 @@ export default function CartPage() {
 
       if (!response.ok) throw new Error("Failed to remove item");
 
-      setCart(cart.filter((item) => item.id !== id));
+      setCart((prevCart) => prevCart.filter((item) => item.id !== id)); // ✅ Update only after success
     } catch (error) {
       console.error("Error removing item:", error);
     }
   };
 
-  const totalPrice = cart.reduce(
+  const totalPrice = (cart || []).reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
@@ -52,7 +84,11 @@ export default function CartPage() {
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-3xl font-semibold mb-6">Shopping Cart</h1>
 
-      {cart.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-600">Loading cart...</p>
+      ) : error ? (
+        <div className="text-center text-red-500">{error}</div>
+      ) : cart.length === 0 ? (
         <div className="text-center">
           <p className="text-gray-600">Your cart is empty!</p>
           <Link href="/products">
